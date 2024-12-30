@@ -79,7 +79,7 @@ export function ChatMessage({ message, isNew = false }: ChatMessageProps) {
       {isUser ? (
         <>
           <div className="flex-1" />
-          <div className="text-sm text-gray-400 self-center">
+          <div className="text-sm text-gray-700 dark:text-gray-400 self-center bg-gray-100 dark:bg-[#1e2734] p-3 rounded-lg">
             {message.content}
           </div>
           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-500 text-white font-medium text-sm">

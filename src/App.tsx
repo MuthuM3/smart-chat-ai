@@ -33,6 +33,8 @@ export default function App() {
   const [modelType, setModelType] = useState<ModelType>("chat");
   const [showWelcome, setShowWelcome] = useState(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollTop, setLastScrollTop] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [lastMessageId, setLastMessageId] = useState<string | null>(null);
@@ -72,6 +74,22 @@ export default function App() {
 
     loadConversations();
   }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (chatContainerRef.current) {
+        const { scrollTop } = chatContainerRef.current;
+        setShowHeader(scrollTop < lastScrollTop || scrollTop < 50);
+        setLastScrollTop(scrollTop);
+      }
+    };
+
+    const container = chatContainerRef.current;
+    if (container) {
+      container.addEventListener("scroll", handleScroll);
+      return () => container.removeEventListener("scroll", handleScroll);
+    }
+  }, [lastScrollTop]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -220,8 +238,10 @@ export default function App() {
     <ThemeProvider>
       <UserProvider>
         <ChatProvider>
-          <div className="flex flex-col h-screen bg-[#1a1e24]">
-            <Header modelType={modelType} onModelChange={setModelType} />
+          <div className="flex flex-col h-screen dark:bg-gray-900 bg-white">
+            <div className="transition-transform duration-300 sticky top-0 z-50 bg-white dark:bg-gray-900">
+              <Header modelType={modelType} onModelChange={setModelType} />
+            </div>
             <div className="flex flex-1 overflow-hidden">
               <ChatHistory
                 conversations={sortedConversations}
@@ -262,7 +282,7 @@ export default function App() {
                     )}
                   </div>
                 </div>
-                <div className="border-t border-gray-700 p-4">
+                <div className="sticky bottom-0 border-t dark:border-gray-700 border-gray-200 bg-white dark:bg-gray-900 py-2 px-4">
                   <div className="max-w-3xl mx-auto">
                     <ChatInput
                       onSendMessage={handleSendMessage}
