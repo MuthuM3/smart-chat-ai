@@ -18,60 +18,64 @@ export function Header({ modelType, onModelChange }: HeaderProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [chatHistory, setChatHistory] = useState([]);
 
-  const handleCredentialResponse = async (response: any) => {
-    try {
-      const responsePayload = decodeJwtResponse(response.credential);
-      console.log('Google Sign-In successful:', responsePayload);
-
-      const userData = {
-        name: responsePayload.name,
-        email: responsePayload.email,
-        imageUrl: responsePayload.picture,
-        accessToken: response.credential
-      };
-
-      // Set user data first
-      setUser(userData);
-      
-      // Set user ID in both services
-      indexedDBService.setUserId(responsePayload.email);
-      googleDriveService.setUserId(responsePayload.email);
-      googleDriveService.setAccessToken(response.credential);
-
+  const handleCredentialResponse = useCallback(
+    async (response: any) => {
       try {
-        // Try to load chat history from IndexedDB first (faster)
-        const localHistory = await indexedDBService.loadChatHistory();
-        if (localHistory && localHistory.length > 0) {
-          console.log('Loaded chat history from IndexedDB');
-          setChatHistory(localHistory);
-          localStorage.setItem('conversations', JSON.stringify([{
-            id: 'default',
-            title: 'Chat History',
-            messages: localHistory
-          }]));
-        } else {
-          // If no local history, try Google Drive
-          await googleDriveService.initializeGoogleDriveAPI();
-          const driveHistory = await googleDriveService.loadChatHistory();
-          if (driveHistory && driveHistory.length > 0) {
-            console.log('Loaded chat history from Google Drive');
-            setChatHistory(driveHistory);
-            // Save to IndexedDB for future use
-            await indexedDBService.saveChatHistory(driveHistory);
+        const responsePayload = decodeJwtResponse(response.credential);
+        console.log('Google Sign-In successful:', responsePayload);
+        window.location.reload();
+
+        const userData = {
+          name: responsePayload.name,
+          email: responsePayload.email,
+          imageUrl: responsePayload.picture,
+          accessToken: response.credential
+        };
+
+        // Set user data first
+        setUser(userData);
+        
+        // Set user ID in both services
+        indexedDBService.setUserId(responsePayload.email);
+        googleDriveService.setUserId(responsePayload.email);
+        googleDriveService.setAccessToken(response.credential);
+
+        try {
+          // Try to load chat history from IndexedDB first (faster)
+          const localHistory = await indexedDBService.loadChatHistory();
+          if (localHistory && localHistory.length > 0) {
+            console.log('Loaded chat history from IndexedDB');
+            setChatHistory(localHistory);
             localStorage.setItem('conversations', JSON.stringify([{
               id: 'default',
               title: 'Chat History',
-              messages: driveHistory
+              messages: localHistory
             }]));
+          } else {
+            // If no local history, try Google Drive
+            await googleDriveService.initializeGoogleDriveAPI();
+            const driveHistory = await googleDriveService.loadChatHistory();
+            if (driveHistory && driveHistory.length > 0) {
+              console.log('Loaded chat history from Google Drive');
+              setChatHistory(driveHistory);
+              // Save to IndexedDB for future use
+              await indexedDBService.saveChatHistory(driveHistory);
+              localStorage.setItem('conversations', JSON.stringify([{
+                id: 'default',
+                title: 'Chat History',
+                messages: driveHistory
+              }]));
+            }
           }
+        } catch (error) {
+          console.error('Error loading chat history:', error);
         }
       } catch (error) {
-        console.error('Error loading chat history:', error);
+        console.error('Error handling Google Sign-In:', error);
       }
-    } catch (error) {
-      console.error('Error handling Google Sign-In:', error);
-    }
-  };
+    },
+    [indexedDBService, googleDriveService, setUser]
+  );
 
   const handleSignOut = async () => {
     console.log('Signing out...');
@@ -109,6 +113,7 @@ export function Header({ modelType, onModelChange }: HeaderProps) {
         localStorage.removeItem(`conversations_${currentUserId}`);
       }, { once: true });
 
+      window.location.reload();
     } catch (error) {
       console.error('Error during sign out:', error);
     }

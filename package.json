@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://MuthuM3.github.io/smart-chat-ai",
+  "homepage": "https://YOUR_USERNAME.github.io/smart-chat-app",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
